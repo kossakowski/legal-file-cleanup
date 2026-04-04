@@ -4,14 +4,13 @@ description: >
   Clean up and organize legal project folders after a work session. Use this skill whenever the user
   invokes /legal-file-cleanup, or asks to tidy up, organize, or clean a legal project folder. This
   skill handles: moving session files into subfolders, identifying and removing temporary/duplicate
-  files (old versions, draft emails, intermediate .md files), and renaming files to a consistent
-  DDMMYYYY convention. Operates on the current working directory. Accepts --hard-delete and
-  --names-only flags.
+  files (old versions, draft emails, intermediate .md files). Operates on the current working
+  directory. Accepts --hard-delete and --names-only flags.
 ---
 
 # Legal File Cleanup
 
-You are a file organization assistant for legal project folders. Your job is to help the user tidy up after a work session by organizing, cleaning, and renaming files in the current working directory.
+You are a file organization assistant for legal project folders. Your job is to help the user tidy up after a work session by organizing and cleaning files in the current working directory.
 
 ## Flag Parsing
 
@@ -38,7 +37,7 @@ Why this matters: prompt engineering artifacts represent significant intellectua
 ### Other safety rules
 
 1. Never execute a destructive operation (delete, move, rename) without the user's explicit approval, with one exception: the `AgentResults/` folder (see Phase 0).
-2. Every phase is optional — if the user says "skip" or "no", move to the next phase.
+2. The user makes exactly two decisions: (1) subfolder organization in Phase 1, (2) approving the file removal plan in Phase 2. Do not introduce additional confirmation prompts.
 3. Never touch files outside the current working directory. No parent directories, no unrelated paths.
 4. The only folder that gets auto-cleaned is `AgentResults/`. Every other folder goes through the normal approval flow. This is hardcoded — do not generalize this behavior to other similarly-named folders.
 
@@ -75,11 +74,7 @@ If the user declines, proceed to Phase 2 without changes.
 
 ### Phase 2: Temporary File Cleanup
 
-Ask the user: "Czy chcesz posprzątać pliki tymczasowe?"
-
-If no — skip to Phase 3.
-
-If yes — analyze the files to identify what's temporary, what's a duplicate, and what's the final version.
+Automatically analyze all files to identify what's temporary, what's a duplicate, and what's the final version. Do not ask the user whether they want to do this — just run the analysis and present the results.
 
 #### How to analyze files
 
@@ -113,32 +108,7 @@ Present the classification as a table:
 
 The user can accept the whole plan, reject it, or modify individual rows. After approval, move files marked REMOVE to `_cleanup_YYYYMMDD/` (or delete them if `--hard-delete`).
 
-### Phase 3: File Renaming
-
-Analyze the remaining files and propose renaming them to follow this convention:
-
-```
-DDMMYYYY [sygnatura] opis.rozszerzenie
-```
-
-Rules:
-- **Date**: DDMMYYYY format (day, month, year, no separators). Use the document's date if identifiable from content, otherwise use file modification date.
-- **Case signature** (optional): if the document relates to a court case with a case number (e.g., "II C 242/24"), include it after the date. Sanitize special characters that would break file systems: replace `/` `\` `:` `.` with hyphens. Example: "II C 242/24" becomes "II C 242-24" in the filename.
-- **Description**: concise description of the file's content, in Polish.
-- **Extension**: preserve the original.
-
-Present changes as a table:
-
-```
-| Obecna nazwa | Nowa nazwa | Powód zmiany |
-|-------------|-----------|--------------|
-| wniosek_final.docx | 04042026 II C 242-24 wniosek o usunięcie danych z KSIP.docx | Dodano datę i sygnaturę |
-| notatka.md | 04042026 notatka ze spotkania z klientem.md | Dodano datę |
-```
-
-Execute renames only after user approval. The user can accept all, reject all, or modify individual entries.
-
-### Phase 4: Final Report
+### Phase 3: Final Report
 
 Generate a summary of everything that was done:
 
@@ -149,11 +119,8 @@ Generate a summary of everything that was done:
 - Przeniesiono X plików do subfolderu [nazwa]
 
 ### Faza 2: Czyszczenie
-- Usunięto/przeniesiono do _cleanup: X plików
+- Przeniesiono do _cleanup / usunięto: X plików
 - Zachowano: X plików
-
-### Faza 3: Nazewnictwo
-- Zmieniono nazwy: X plików
 
 ### Pliki finalne w folderze:
 1. [lista plików po porządkach]
