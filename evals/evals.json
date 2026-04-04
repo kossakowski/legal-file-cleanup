@@ -1,0 +1,26 @@
+{
+  "skill_name": "legal-file-cleanup",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/legal-file-cleanup",
+      "expected_output": "The skill should: (1) list files in cwd, (2) auto-clean AgentResults/ if present, (3) ask about subfolder organization, (4) ask about temp file cleanup, (5) propose renaming with DDMMYYYY convention. All destructive actions require user confirmation. Prompts/skill files are never touched.",
+      "files": [],
+      "notes": "Basic invocation with default flags. Tests the full 4-phase workflow on a legal project folder containing a mix of final docs, old versions, .md intermediates, draft emails, and an AgentResults/ folder."
+    },
+    {
+      "id": 2,
+      "prompt": "/legal-file-cleanup --hard-delete",
+      "expected_output": "The skill should immediately display the hard-delete warning and require the user to type 'potwierdzam'. If confirmed, cleanup uses permanent deletion instead of _cleanup subfolder. All other phases work the same.",
+      "files": [],
+      "notes": "Tests the --hard-delete flag confirmation flow. Should NOT proceed without exact 'potwierdzam' response."
+    },
+    {
+      "id": 3,
+      "prompt": "/legal-file-cleanup --names-only",
+      "expected_output": "The skill should work the same as eval 1, but sub-agents should NOT read file contents — only analyze file names, dates, and sizes. This means .docx content won't be extracted. Classification will rely on filename patterns (v1/v2, .html, .md+.docx pairs).",
+      "files": [],
+      "notes": "Tests the --names-only flag. Sub-agents should NOT use read_docx.py or Read tool on file contents."
+    }
+  ]
+}
