@@ -41,7 +41,7 @@ Why this matters: prompt engineering artifacts represent significant intellectua
 ### Other safety rules
 
 1. Never execute a destructive operation (delete, move, rename) without the user's explicit approval, with one exception: the `AgentResults/` folder (see Phase 0).
-2. The user makes exactly three decisions: (1) subfolder organization in Phase 1, (2) approving the file removal plan in Phase 2, (3) whether to update CLAUDE.md files in Phase 4. An additional prompt may occur in Phase 4 if pre-existing similar sections are found in a CLAUDE.md. Do not introduce confirmation prompts beyond these.
+2. The user makes exactly four decisions: (1) subfolder organization in Phase 1, (2) approving the file removal plan in Phase 2, (3) whether to update CLAUDE.md files in Phase 4, (4) whether to commit and push in Phase 5. Additional prompts may occur in Phase 4 (pre-existing similar sections) and Phase 5 (repo initialization). Do not introduce confirmation prompts beyond these.
 3. Never touch files outside the current working directory, except in Phase 4: the skill may read and write CLAUDE.md files in parent directories, walking upward until it reaches the folder containing `.legal-root`. It must not modify any other files in parent directories.
 4. The only folder that gets auto-cleaned is `AgentResults/`. Every other folder goes through the normal approval flow. This is hardcoded — do not generalize this behavior to other similarly-named folders.
 
@@ -229,3 +229,38 @@ The skill never overwrites free-text content it did not create. Specifically:
 - Any text between the heading and the first managed section is never changed.
 - The `Description` column in subproject index rows is never changed after initial creation — it is only set when a new row is added.
 - Only the managed sections (identified by the marker line) are updated on subsequent runs.
+
+### Phase 5: Commit & Push
+
+After Phase 4 completes (or is skipped), ask the user: **"Commit and push changes? (yes/no)"**
+
+If no, the skill ends.
+
+If yes, proceed — but first check whether the current working directory is inside a git repository:
+
+#### No git repository found
+
+If `git rev-parse --git-dir` fails (no repo), offer to initialize one:
+
+```
+No git repository found in this folder. Initialize one? (yes/no)
+```
+
+If the user agrees:
+1. Run `git init` in the current working directory.
+2. Create a `.gitignore` with sensible defaults for legal project folders (e.g., `_cleanup_*/`, `AgentResults/`, `.DS_Store`, `Thumbs.db`, `~$*`).
+3. Stage all files in the current working directory.
+4. Commit with a message: `Initial commit: [folder name] project files`
+5. Do **not** push (there is no remote yet). Inform the user: "Repo initialized and committed. No remote configured — add one with `git remote add origin <url>` when ready."
+
+#### Git repository exists
+
+1. Stage all changed files **in the current working directory only**. Use explicit file paths — do not use `git add -A` or `git add .` from a parent directory. Changes made to parent CLAUDE.md files in Phase 4 are explicitly **out of scope** — do not stage or commit them.
+2. Generate a concise commit message summarizing what the cleanup did (e.g., "Clean up project folder: remove 4 temp files, organize session files into pozew/").
+3. Commit.
+4. If a remote is configured and the branch tracks an upstream, push. If the push fails (e.g., auth issues, no upstream), inform the user of the error and suggest the manual command.
+5. If no remote is configured, inform the user: "Committed locally. No remote configured."
+
+#### Why only the current folder
+
+Phase 4's upward walk modifies CLAUDE.md files in parent directories that may belong to a different repository, a different branch, or a shared workspace. Committing those changes automatically would be presumptuous — the user manages parent-level commits on their own terms.
