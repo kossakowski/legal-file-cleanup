@@ -1,11 +1,12 @@
 ---
 name: legal-file-cleanup
+model: sonnet
 description: >
   Clean up and organize legal project folders after a work session. Use this skill whenever the user
   invokes /legal-file-cleanup, or asks to tidy up, organize, or clean a legal project folder. This
   skill handles: moving session files into subfolders, identifying and removing temporary/duplicate
   files (old versions, draft emails, intermediate .md files). Operates on the current working
-  directory. Accepts --hard-delete and --names-only flags.
+  directory. Accepts --hard-delete, --names-only, and --opus flags.
 ---
 
 # Legal File Cleanup
@@ -20,7 +21,9 @@ Check whether the following flags appear in the user's invocation:
 
 - `--names-only` — when analyzing files in Phase 2, sub-agents examine only file names, modification dates, and sizes instead of reading file contents. This is faster and cheaper but less accurate.
 
-If neither flag is present, the default behavior is: move files to `_cleanup_YYYYMMDD/` and read full file contents for analysis.
+- `--opus` — override the default Sonnet 4.6 model and run the entire skill (orchestrator and all sub-agents) using Opus 4.6 with extended context. Use this flag for large or complex project folders where deeper reasoning is needed. When this flag is present, spawn all sub-agents with `model: "opus"` explicitly set.
+
+If neither `--hard-delete` nor `--names-only` is present, the default behavior is: move files to `_cleanup_YYYYMMDD/` and read full file contents for analysis. The default model is Sonnet 4.6.
 
 ## Safety Rules
 
@@ -78,7 +81,7 @@ Automatically analyze all files to identify what's temporary, what's a duplicate
 
 #### How to analyze files
 
-Spawn sub-agents (Sonnet 4.6) to analyze files in batches of up to 3 files per agent. Each sub-agent should:
+Spawn sub-agents to analyze files in batches of up to 3 files per agent. Use Sonnet 4.6 by default, or Opus 4.6 if the `--opus` flag is set. Each sub-agent should:
 
 1. Read the file contents (unless `--names-only` flag is set, in which case analyze name, modification date, and size only)
 2. For .docx files, use `python3 -c "from docx import Document; ..."` or the helper script at `scripts/read_docx.py` in this skill's directory
