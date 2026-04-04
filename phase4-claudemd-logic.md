@@ -40,6 +40,36 @@ This marker is how the skill identifies its own sections on subsequent runs. It 
 
 A single CLAUDE.md may have both sections if the folder contains both files and subfolders.
 
+## Size guard
+
+Before writing any CLAUDE.md file (in Step 1 or Step 2), count the total line count of the resulting file. Anthropic recommends keeping CLAUDE.md files under 200 lines for optimal adherence — longer files consume more context and reduce how reliably Claude follows individual instructions.
+
+- **Under 200 lines:** Proceed without warning.
+- **200–300 lines:** Warn the user:
+  ```
+  UWAGA: CLAUDE.md will be [N] lines after update (recommended max: 200).
+
+  Options:
+  1. Write anyway
+  2. Shorten descriptions to reduce line count, then write
+  3. Skip this CLAUDE.md update
+  ```
+  Apply the user's choice.
+- **Over 300 lines:** Strongly warn:
+  ```
+  UWAGA: CLAUDE.md will be [N] lines after update (recommended max: 200, hard limit: ~300).
+  Files this long significantly reduce Claude's adherence to instructions.
+
+  Options:
+  1. Write anyway (not recommended)
+  2. Shorten descriptions to reduce line count
+  3. Move file inventory to a separate file and add @import reference
+  4. Skip this CLAUDE.md update
+  ```
+  If option 3 is chosen: create `FILE-INVENTORY.md` in the same directory with the full inventory table, and replace the inventory section in CLAUDE.md with a single import line: `@FILE-INVENTORY.md`. This keeps the CLAUDE.md short while preserving the inventory in Claude's context via the import mechanism.
+
+This guard applies to every CLAUDE.md write in Phase 4 — both the current folder (Step 1) and parent folders (Step 2).
+
 ## Step 1: Update current folder's CLAUDE.md
 
 Generate the file inventory from Phase 2 results (file names + summaries of kept files). Then handle the CLAUDE.md in the current folder using the three-way logic:

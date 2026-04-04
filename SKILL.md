@@ -152,6 +152,7 @@ Read `phase4-claudemd-logic.md` in this skill's directory for the complete updat
 - Upward directory walk rules (Step 2) — how to update parent CLAUDE.md files up to `.legal-root`
 - Status field conventions (`active`, `completed`, `archived`)
 - Description preservation rules — what content the skill must never overwrite
+- Size guard — warns and prompts the user when a CLAUDE.md file would exceed 200 lines
 
 ### Phase 5: Commit & Push
 
