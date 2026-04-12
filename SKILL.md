@@ -2,7 +2,6 @@
 name: legal-file-cleanup
 model: opus
 effort: high
-disable-model-invocation: true
 argument-hint: "[--hard-delete] [--names-only]"
 description: >
   Cleans up and organizes legal project folders after a work session. Moves session files into
