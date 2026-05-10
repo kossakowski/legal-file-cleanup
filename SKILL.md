@@ -1,6 +1,5 @@
 ---
 name: legal-file-cleanup
-model: opus
 effort: high
 argument-hint: "[--hard-delete] [--names-only]"
 description: >
